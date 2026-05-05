@@ -1,0 +1,8 @@
+torch>=2.0
+torchvision>=0.15
+pydicom>=2.3
+numpy>=1.21
+scipy>=1.7
+scikit-image>=0.19
+pyyaml>=6.0
+opencv-python>=4.5

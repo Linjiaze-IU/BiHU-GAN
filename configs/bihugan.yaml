@@ -1,0 +1,57 @@
+# Dataset lists
+# Each list file contains absolute paths to DICOM slices of domain A
+# The corresponding B slices are found automatically by substituting `pair_from` with `pair_to` in the directory path.
+train_list: "/xxxx/xxx/data-xxxxx/data_catch/train_xxx.txt"
+val_list:   "/xxxx/xxx/data-xxxxx/data_catch/val_xxx.txt"
+test_list:  "/home/ljz/data-Renal/data_catch/test_xxx.txt"
+
+# Tokens that distinguish the two domains in the file paths.
+pair_from: "AC0"
+pair_to:   "AC1"
+
+# Output paths
+checkpoints_dir: "./checkpoints"
+# output_root: root directory for exported DICOM series during inference.
+output_root: "./output/xx/xxx"
+
+internal_resolution: 1024        # native resolution used internally
+external_resolution: 512         # reserved
+model_input_resolution: 1024     # training & inference resolution
+
+hu_min: -1000.0                  # lower
+hu_max: 2047.0                   # upper
+body_hu_thresh: -600.0           # extract body mask
+bone_hu_thresh: 250.0            # separate bone
+
+# Loss weights
+global_scaling_factor: 1.2       # 0.8 1.0 1.2 1.5  overall weight
+hu_loss_weight: 1.2               # weight of the HU consistency loss
+
+# trainer
+epochs: 60
+batchSize: 2                     # 4  2  8
+lr: 0.0001                       # initial learning rate
+beta1: 0.9                       # Adam beta1
+beta2: 0.999                     # Adam beta2
+seed: 22001181                   # random seed 
+
+cuda: true                       # use GPU if available
+num_workers_train: 4             # DataLoader workers for training
+num_workers_val: 0               # DataLoader workers for validation 
+amp: true                        # enable Automatic Mixed Precision 
+grad_accum_steps: 1              # gradient accumulation steps 
+
+# Monte Carlo Dropout
+mc_dropout_p_train: 0.2          # dropout probability during training
+mc_dropout_p_infer: 0.0          # dropout probability during inference (0 = deterministic)
+
+
+# Early stopping
+early_stopping_enabled: true     # enable / disable early stopping
+early_stopping_mode: "both"      # "both" monitors SSIM & HU-MAD
+early_stopping_patience: 45      # epochs without improvement before stopping
+
+# Inference settings
+inference_direction: "B2A"       #A2B  B2A  default translation direction for test.py
+export_series_tag_A2B: "sRT-CECT"   # DICOM SeriesDescription for A→B output
+export_series_tag_B2A: "sRT-CT"     # DICOM SeriesDescription for B→A output
