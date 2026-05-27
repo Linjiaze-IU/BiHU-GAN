@@ -1,5 +1,5 @@
 # BiHU-GAN  
-**HU‑Preserving Bidirectional Cycle GAN for Non‑Contrast and Contrast‑Enhanced CT Synthesis in Head‑and‑Neck Radiotherapy**
+**CT-Number-Preserving Bidirectional Cycle GAN for Contrast Addition and Removal in Head-and-Neck Radiotherapy Planning CT**
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Python 3.8+](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/downloads/)
@@ -7,7 +7,7 @@
 
 > In this repository, Hounsfield Units (HU) refer to the CT number scale used for radiotherapy dose calculation.
 >
-> Official PyTorch implementation of **BiHU-GAN** – a physically constrained bidirectional cycle‑consistent GAN that simultaneously synthesizes contrast‑enhanced CT from non‑contrast CT and recovers HU‑faithful non‑contrast CT from contrast‑enhanced CT, specifically designed for head‑and‑neck radiotherapy planning.
+> Official PyTorch implementation of **BiHU-GAN** – a physically constrained bidirectional cycle‑consistent GAN that simultaneously synthesizes contrast‑enhanced CT from non‑contrast CT and recovers CT-number‑faithful non‑contrast CT from contrast‑enhanced CT, specifically designed for head‑and‑neck radiotherapy planning.
 > 
 > We are currently working to extend BiHU‑GAN to more anatomical sites (thorax, abdomen, pelvis, etc.), and sincerely hope to have the honor of continuing to share our research progress and improvements with peers in the field.
 
@@ -23,22 +23,22 @@ Radiotherapy planning for head‑and‑neck cancer faces an inherent trade‑off
 
 | Direction | Clinical Use |
 |-----------|---------------|
-| **NCCT → CECT** | Generate synthetic contrast‑enhanced CT (sRT‑CECT) to assist contouring without contrast agent injection. |
-| **CECT → NCCT** | Remove contrast effects to produce HU‑faithful synthetic non‑contrast CT (sRT‑CT) for accurate dose calculation. |
+| **NCCT → CECT** | Generate synthetic contrast‑enhanced CT (sCECT) to assist contouring without contrast agent injection. |
+| **CECT → NCCT** | Remove contrast effects to produce CT-number‑faithful synthetic non‑contrast CT (sNCCT) for accurate dose calculation. |
 
-The model incorporates **HU‑deviation loss**, **gradient‑consistency loss**, and **CBAM attention** to maintain anatomical fidelity, edge sharpness, and physical CT number accuracy – validated on multicenter data with dosimetric endpoints.
+The model incorporates **CT number‑deviation loss**, **gradient‑consistency loss**, and **CBAM attention** to maintain anatomical fidelity, edge sharpness, and physical CT number accuracy – validated on multicenter data with dosimetric endpoints.
 
 ---
 
 ## ✨ Key Features
 
 - **Bidirectional unpaired translation** – works with paired or unpaired CT volumes.
-- **HU‑aware constraints** – tissue‑weighted HU loss (soft‑tissue vs. bone) enforces physical radiodensity fidelity.
+- **CT number‑aware constraints** – tissue‑weighted CT number loss (soft‑tissue vs. bone) enforces physical radiodensity fidelity.
 - **Gradient consistency loss** – preserves high‑density boundaries (bone, metal‑adjacent regions).
 - **CBAM modules** – enhance low‑contrast structures (vessels, lymph nodes).
 - **Monte Carlo Dropout** – supports uncertainty estimation during inference.
 - **Full DICOM integration** – read/write DICOM series with preserved metadata (RescaleSlope/Intercept, positioning).
-- **Built‑in evaluation** – masked SSIM, PSNR, NMAE, HU‑MAD, and contouring/dosimetric metrics.
+- **Built‑in evaluation** – masked SSIM, PSNR, NMAE, CT-number‑MAD, and contouring/dosimetric metrics.
 - **Optimized training** – mixed precision (AMP), gradient accumulation, cosine warm‑up, early stopping.
 
 ---
@@ -62,7 +62,7 @@ BiHU-GAN/
 │   │   ├── gan_lsgan.py           # LSGAN adversarial loss
 │   │   ├── cycle.py               # Cycle and L1 loss
 │   │   ├── gradients.py           # Sobel gradient consistency loss
-│   │   └── hu_loss.py             # HU Consistency Loss
+│   │   └── hu_loss.py             # CT number Consistency Loss
 │   └── utils/
 │       ├── metrics.py             # SSIM, PSNR, NMAE, HU‑MAD
 │       └── export_dicom.py        # DICOM series export
@@ -116,11 +116,11 @@ Edit `configs/bihugan.yaml` to set your data paths, resolution, CT number window
 |-----------|-------------|
 | `train_list` / `val_list` / `test_list` | Text files with slice paths |
 | `pair_from` / `pair_to` | Keyword replacement for modality pairing (e.g., `"AC0"` → `"AC1"`) |
-| `hu_min`, `hu_max` | CT number clipping range (default `-1000`, `2047`) |
-| `body_hu_thresh` | Threshold for body mask (default `-600`) |
-| `bone_hu_thresh` | Threshold separating soft tissue and bone (default `250`) |
-| `global_scaling_factor` | Global multiplier for non‑HU losses (recommended `1.2`) |
-| `hu_loss_weight` | Weight for HU consistency loss (recommended `1.2`) |
+| `CT number_min`, `CT number_max` | CT number clipping range (default `-1000`, `2047`) |
+| `body_CT number_thresh` | Threshold for body mask (default `-600`) |
+| `bone_CT number_thresh` | Threshold separating soft tissue and bone (default `250`) |
+| `global_scaling_factor` | Global multiplier for non‑CT number losses (recommended `1.2`) |
+| `CT number_loss_weight` | Weight for CT number consistency loss (recommended `1.2`) |
 | `model_input_resolution` | Training resolution (`1024` recommended for head‑neck) |
 | `epochs`, `batchSize`, `lr` | Training hyperparameters |
 
@@ -133,7 +133,7 @@ python train.py --config configs/bihugan.yaml
 ```
 
 - Checkpoints are saved in `checkpoints_dir/` (both `*_best.pth` and `*_latest.pth`).
-- Validation runs every 5 epochs; early stopping monitors combined SSIM + HU‑MAD.
+- Validation runs every 5 epochs; early stopping monitors combined SSIM + CT-number‑MAD.
 - Mixed precision and gradient accumulation are enabled by default.
 
 ### 5. Inference & Evaluation
@@ -150,21 +150,21 @@ python test_infer.py --config configs/bihugan.yaml --direction A2B --no_export
 ```
 
 **Output**:
-- Console prints masked SSIM, PSNR, NMAE, and HU‑MAD.
+- Console prints masked SSIM, PSNR, NMAE, and CT-number‑MAD.
 - DICOM series are exported to `output_root/` with preserved spatial metadata and a “(BiHU‑GAN)” tag.
 
 ---
 
 ## 📊 Evaluation Metrics
 
-The code computes radiotherapy‑relevant metrics directly on **HU‑space**:
+The code computes radiotherapy‑relevant metrics directly on **CT-number‑space**:
 
 | Metric | Description |
 |--------|-------------|
 | **SSIM** | Structural similarity (masked to body region) |
 | **PSNR** | Peak signal‑to‑noise ratio (dB) |
 | **NMAE** | Normalized mean absolute error (range `[-1,1]`) |
-| **HU‑MAD** | Mean absolute deviation of Hounsfield Units (global / soft‑tissue / bone) |
+| **CT-number‑MAD** | Mean absolute deviation of CT number (global / soft‑tissue / bone) |
 
 For dosimetric evaluation (gamma pass rate, DVH differences) we used an external TPS (Varian Eclipse) – those scripts are not included but can be implemented using the exported DICOM series.
 
@@ -172,7 +172,7 @@ For dosimetric evaluation (gamma pass rate, DVH differences) we used an external
 
 ## 🧪 Core Innovations (Code Highlights)
 
-### HU Consistency Loss
+### CT number Consistency Loss
 
 ```python
 # bihugan/losses/hu_loss.py
